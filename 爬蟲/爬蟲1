@@ -1,0 +1,42 @@
+from pyquery import PyQuery as pq
+import numpy as np
+import time
+import random  
+
+#單一地區網頁全
+url = "http://you.ctrip.com/sitelist/china110000.html"
+#讀入html完整檔，必須給他請求，以及改編碼
+html_doc = pq(url, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+
+area=['http://you.ctrip.com/sight/'+link.attrib['href'].split('/')[2] for link in html_doc('.w_220 a')]
+
+area.extend(['http://you.ctrip.com/sight/'+link.attrib['href'].split('/')[2] for link in html_doc('.c_city_nlist.cf a')])
+print(len(area))
+import datetime
+starttime = datetime.datetime.now()
+
+for area_href in area:    
+    
+    html_doc = pq(area_href, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+    #抓取景點
+    view=[link.text.strip() for link in html_doc('dt a')]
+    #抓最後一頁節點
+    x=int(html_doc('.pager_v1 b').text())
+    #抓地區
+    city=html_doc('.f_left h1 a').text()
+    
+    print('now is scraw area',city)
+    print(city,'need chage',x,'page!')
+    
+    #開始爬取各地點的景點
+   
+    for i in range(2,x):        
+        url='http://you.ctrip.com/sight/suzhou11/s0-p'+str(i)+'.html#sightname'
+        html_doc = pq(url, headers={'user-agent': 'I am a man!'},encoding='utf-8')    
+        view.extend([link.text.strip() for link in html_doc('dt a')])
+        sleep_secs = random.randint(0, 4)
+        time.sleep(sleep_secs)   
+        print(city,'第',i,'頁  OK!')
+#計算時間用    
+endtime = datetime.datetime.now()
+print (endtime - starttime) 
