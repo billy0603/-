@@ -1,0 +1,88 @@
+from pyquery import PyQuery as pq
+import numpy as np
+import time
+import random  
+
+#日本觀光網頁全
+url = "https://www.tripadvisor.com.tw/Attractions-g294232-Activities-Japan.html"
+
+#讀入html完整檔，必須給他請求，以及改編碼
+html_doc = pq(url, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+#抓取一開始觀光的網頁
+AREA_PAGE=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.ap_navigator a')]
+#要抓後面連續的
+other_url=AREA_PAGE.pop()
+#刪除第一個人氣景點的網頁
+del AREA_PAGE[0]
+#讀入html完整檔，必須給他請求，以及改編碼
+html_doc = pq(other_url, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+#抓到21~70個網址(下一頁50個)
+PAGE=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.geoList a')]
+AREA_PAGE.extend(PAGE)
+#抓到往下一頁的
+PAGE1=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.guiArw.sprite-pageNext.pid0')]
+while PAGE1!=[]:
+    html_doc = pq(PAGE1[0]) 
+    PAGE=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.geoList a')]
+    AREA_PAGE.extend(PAGE)
+    print(PAGE1[0],'OK!')
+    #抓往下一頁的
+    PAGE1=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.guiArw.sprite-pageNext.pid0')]
+    sleep_secs = random.randint(0, 1)
+    time.sleep(sleep_secs)   
+    #最後一頁，沒有往下即跳開
+    if PAGE1==[]:
+        print(len(AREA_PAGE),'is done!')
+        
+#定義各地區查看所有方法
+def testcrawl1(url):
+    html_doc = pq(url)   
+    AREA_Feature_PAGE1=['https://www.tripadvisor.com.tw'+link.attrib['href'] for link in html_doc('.title_text')]
+    AREA_Feature_PAGE.extend(AREA_Feature_PAGE1)
+    sleep_secs = random.randint(0, 1)
+    time.sleep(sleep_secs)
+    print(len(AREA_Feature_PAGE))
+
+#計算運行時間用
+import datetime
+starttime = datetime.datetime.now()
+
+AREA_Feature_PAGE=[]
+for i in AREA_PAGE:   
+    testcrawl1(i)
+    print(i,'OK!')
+
+#計算時間用    
+endtime = datetime.datetime.now()
+print (endtime - starttime)    
+
+#定義方法
+def testcrawl(url):
+    html_doc = pq(url)        
+    temp='.listing_title a'
+    title1 = [i.text.strip() for i in html_doc(temp)]
+    title.extend(title1)    
+    sleep_secs = random.randint(0, 1)
+    time.sleep(sleep_secs)
+    
+    import time
+import random
+#先設一個list接
+title = []
+
+#計算運行時間用
+import datetime
+starttime = datetime.datetime.now()
+
+
+for i in AREA_Feature_PAGE:   
+    testcrawl(i)
+    print(i,'OK')
+    
+    
+#計算時間用    
+endtime = datetime.datetime.now()
+print (endtime - starttime)    
+
+text=list(set(title))
+
