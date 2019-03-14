@@ -1,0 +1,105 @@
+from pyquery import PyQuery as pq
+import numpy as np
+import time
+import random  
+import requests
+
+#單一地區網頁全
+url = "https://place.qyer.com/japan/citylist-0-0-1/"
+#讀入html完整檔，必須給他請求，以及改編碼
+html_doc = pq(url, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+
+#抓取地區網址
+PAGE=['https:'+link.attrib['href']+'alltravel/' for link in html_doc('.plcCitylist .title.fontYaHei a')]
+
+#抓取總頁數
+tmp=[link.attrib['data-page'] for link in html_doc('.ui_page a')]
+
+#判斷是否有頁面可換頁，並取出總頁數
+
+if tmp==list():
+    i=1
+else:
+    i=int(tmp[int(max(tmp))])
+    
+print('need',i,'!')
+
+#開始爬蟲存網頁
+for i in range(2,i+1):
+    html_doc = pq("https://place.qyer.com/japan/citylist-0-0-"+str(i)+"/", headers={'user-agent': 'I am a man!'},encoding='utf-8')
+    PAGE.extend(['https:'+link.attrib['href']+'alltravel/' for link in html_doc('.plcCitylist .title.fontYaHei a')])
+    #休息
+    sleep_secs = random.randint(0, 1)
+    time.sleep(sleep_secs)   
+    print(i,'OK!')
+    
+#查看一下
+PAGE[0:5]
+import datetime
+starttime = datetime.datetime.now()
+#景點
+sight=list()
+
+#開始一個地點一個地點爬
+for i in PAGE:    
+        
+    #讀入html完整檔，必須給他請求，以及改編碼
+    html_doc = pq(i, headers={'user-agent': 'I am a man!'},encoding='utf-8')
+    #抓取一開始換頁編碼    
+    tmp=[link.attrib['data-page'] for link in html_doc('.ui_page a')]
+    #抓取回傳post的pid碼
+    for link in html_doc('.plcMenuBarAddPlan.fontYaHei a'):
+        pid=int(link.attrib['data-pid']) 
+    city=html_doc('.plcTopBarNameCn.fontYaHei a').text()
+    print('now is scraw area',city)
+
+    #休息
+    sleep_secs = random.randint(0, 2)
+    time.sleep(sleep_secs)  
+    
+    #判斷是否有頁面可換頁
+    if tmp!=list():
+        if len(tmp)>6:
+                tmp=tmp[5]
+        else:
+                tmp=tmp.pop()
+        print('pid=',pid,' and tmp =',int(tmp))
+        #統計一個地區有幾個PAGE要轉頁
+        for num in range(1,int(tmp)):            
+            headers = {
+            'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:2.0.1) Gecko/2010010' \
+            '1 Firefox/4.0.1',
+            'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language':'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.7'}
+            
+            values={
+                "page":num,
+                "type":'city',
+                "pid":pid,
+                "sort":0,
+                "subsort":"all",
+                "isnominate": -1,
+                "haslastm": 'false',
+                "rank": 0   
+                }  
+            
+            url1="https://place.qyer.com/poi.php?action=list_json" 
+            #抓取post資料
+            r = requests.post(url1, data=values,headers=headers)
+
+            #2.解析json
+            text=r.json()
+
+            #休息
+            sleep_secs = random.randint(0, 1)
+            time.sleep(sleep_secs)   
+            #抓取地點資料
+            for num1 in range(0,len(text['data']['list'])):
+                sight.append(text['data']['list'][num1]['cnname'].strip())
+            print(city,'第',num,'頁  OK!')
+    else:
+        print(city,'  tmp = 0!')
+#計算時間用    
+endtime = datetime.datetime.now()
+print (endtime - starttime) 
